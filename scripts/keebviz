@@ -1,0 +1,8 @@
+#!/bin/bash
+# Launch KeebViz if not running, or toggle its window via HID
+if ! pgrep -x "KeebViz" > /dev/null 2>&1; then
+    exec ~/Applications/KeebViz
+else
+    # Already running — just open it (the HID toggle from the keyboard handles the rest)
+    open -a KeebViz 2>/dev/null || true
+fi
