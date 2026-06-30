@@ -495,16 +495,16 @@ struct ContentView: View {
     func startFileWatcher() {
         let url = URL(fileURLWithPath: keymapPath)
         watcher = DispatchSource.makeFileSystemObjectSource(fileDescriptor: open(url.path, O_EVTONLY), eventMask: .write, queue: .main)
-        watcher?.setEventHandler { [weak self] in
-            self?.debounceReload()
+        watcher?.setEventHandler {
+            self.debounceReload()
         }
         watcher?.resume()
     }
 
     func debounceReload() {
         reloadTimer?.invalidate()
-        reloadTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
-            self?.reloadFromFile()
+        reloadTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+            self.reloadFromFile()
         }
     }
 }
@@ -512,6 +512,7 @@ struct ContentView: View {
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     var contentView: ContentView!
+    var statusItem: NSStatusItem!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         contentView = ContentView()
@@ -541,6 +542,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
+        // Menu bar icon
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        if let button = statusItem.button {
+            button.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "KeebViz")
+            button.image?.size = NSSize(width: 18, height: 18)
+        }
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Show Window", action: #selector(showWindow), keyEquivalent: "s")
+        menu.addItem(withTitle: "Hide Window", action: #selector(hideWindow), keyEquivalent: "h")
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(withTitle: "Reload Keymap", action: #selector(reloadKeymap), keyEquivalent: "r")
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(withTitle: "Quit KeebViz", action: #selector(NSApp.terminate(_:)), keyEquivalent: "q")
+        statusItem.menu = menu
+
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if let ch = event.characters {
                 switch ch {
@@ -567,6 +583,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    @objc func showWindow() {
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc func hideWindow() {
+        window.orderOut(nil)
+    }
+
+    @objc func reloadKeymap() {
+        contentView.reloadFromFile()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
