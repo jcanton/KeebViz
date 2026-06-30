@@ -416,7 +416,7 @@ class SofleHIDMonitor: ObservableObject {
         for device in devices {
             var report = [UInt8](repeating: 0 as UInt8, count: 32)
             report[0] = 0x80
-            _ = IOHIDDeviceSetReport(device, kIOHIDReportTypeFeature, 0, report, 32)
+            _ = IOHIDDeviceSetReport(device, kIOHIDReportTypeOutput, 0, report, 32)
             // Also try input report - the keyboard may send asynchronously
             // via layer_state_set_user, so we mainly rely on the callback
         }
